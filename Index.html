@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#F7F8FA">
+<title>Weight Log</title>
+<style>
+  :root {
+    --bg: #F7F8FA;
+    --card-bg: #FFFFFF;
+    --text-main: #111111;
+    --text-muted: #7A7E87;
+    --border-light: #EAEAEC;
+    --border-focus: #D1D5DB;
+    
+    --accent-green-bg: #D1F8D9;
+    --accent-green-text: #1B8C3C;
+    --accent-blue: #6AA6DA;
+    --accent-red: #FEE2E2;
+    --accent-red-text: #EF4444;
+    
+    --radius-inner: 16px;
+    --radius-outer: 28px;
+    --radius-pill: 999px;
+    
+    --shadow-card: 0 18px 40px -12px rgba(0, 0, 0, 0.08), 0 4px 12px -4px rgba(0, 0, 0, 0.04);
+    --shadow-inner: inset 0 2px 4px rgba(0,0,0,0.02);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+    min-height: 100dvh;
+    padding: 24px 16px 100px;
+    max-width: 480px;
+    margin: 0 auto;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  .app-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-outer);
+    padding: 6px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden; /* Ensures children don't break the rounded corners */
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 16px;
+  }
+
+  h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+
+  .streak {
+    font-size: 0.75rem;
+    color: var(--text-main);
+    font-weight: 600;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-pill);
+    background: var(--bg);
+    border: 1px solid transparent;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .icon-btn:active { transform: scale(0.94); background: var(--border-light); }
+
+  .list-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 10px;
+  }
+  
+  .list-group + .list-group {
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+  }
+
+  .list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: var(--radius-inner);
+    transition: background 0.15s;
+    cursor: default;
+  }
+  
+  .list-item-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+
+  .list-icon {
+    font-size: 1.1rem;
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+  }
+
+  .circle-plus {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  .session-banner {
+    background: #F0F9FF;
+    border: 1px solid #BAE6FD;
+    border-radius: var(--radius-inner);
+    padding: 12px 16px;
+    margin: 0 10px 16px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .session-banner.show { display: flex; }
+  .session-banner .txt { font-size: 0.85rem; line-height: 1.4; color: var(--text-main); }
+  .session-banner .txt strong { font-weight: 600; color: #0284C7; }
+  .session-banner .txt span { color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 2px; }
+  .session-banner button {
+    background: #0284C7;
+    color: white;
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .log-card {
+    padding: 8px 10px 16px;
+  }
+
+  .weight-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .input-wrap { position: relative; }
+
+  .input-wrap label {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    pointer-events: none;
+  }
+
+  .input-wrap input {
+    width: 100%;
+    background: var(--bg);
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-inner);
+    padding: 32px 16px 12px;
+    color: var(--text-main);
+    font-size: 1.4rem;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.2s;
+    -moz-appearance: textfield;
+  }
+  .input-wrap input::-webkit-outer-spin-button,
+  .input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .input-wrap input:focus {
+    background: var(--card-bg);
+    border-color: var(--text-main);
+    box-shadow: var(--shadow-inner);
+  }
+  .input-wrap input::placeholder { color: #C0C4CC; font-weight: 400; }
+
+  .unit {
+    position: absolute;
+    right: 16px;
+    bottom: 14px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .date-row { margin-bottom: 12px; }
+  .date-row input {
+    width: 100%;
+    background: var(--bg);
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-inner);
+    padding: 14px 16px;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 500;
+    outline: none;
+    color-scheme: light;
+    transition: all 0.2s;
+  }
+  .date-row input:focus { background: var(--card-bg); border-color: var(--text-main); }
+
+  .save-btn {
+    width: 100%;
+    background: var(--text-main);
+    color: white;
+    border: none;
+    border-radius: var(--radius-inner);
+    padding: 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .save-btn:active:not(:disabled) { transform: scale(0.98); opacity: 0.9; }
+  .save-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 0 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    background: var(--bg);
+    border-radius: var(--radius-inner);
+    padding: 14px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+  }
+  .stat-value.down { color: var(--accent-green-text); }
+  .stat-value.up { color: var(--accent-red-text); }
+
+  .stat-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .goal-card {
+    margin: 0 10px 16px;
+    background: var(--bg);
+    border-radius: var(--radius-inner);
+    padding: 16px;
+    display: none;
+  }
+  .goal-card.show { display: block; }
+  .goal-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .goal-top .lbl { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+  .goal-top .vals { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+  .goal-top .vals strong { color: var(--text-main); font-weight: 700; }
+  .goal-bar-track {
+    height: 8px;
+    background: var(--border-light);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+  }
+  .goal-bar-fill {
+    height: 100%;
+    background: var(--text-main);
+    border-radius: var(--radius-pill);
+    transition: width 0.5s ease;
+  }
+
+  .chart-card {
+    margin: 0 10px 16px;
+    background: var(--bg);
+    border-radius: var(--radius-inner);
+    padding: 16px 16px 8px;
+    display: none;
+  }
+  .chart-card.show { display: block; }
+  .chart-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .chart-head .lbl { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+  .chart-head .range { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+  .chart-svg { width: 100%; height: 64px; display: block; }
+
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    margin-bottom: 12px;
+  }
+  .history-header h2 { font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
+
+  .segmented-control {
+    background: var(--bg);
+    border-radius: var(--radius-pill);
+    padding: 3px;
+    display: flex;
+    gap: 2px;
+  }
+  .segmented-control button {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .segmented-control button.active {
+    background: var(--card-bg);
+    color: var(--text-main);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .history-list { padding: 0 10px; display: flex; flex-direction: column; gap: 4px; }
+
+  .swipe-wrap {
+    position: relative;
+    border-radius: var(--radius-inner);
+    overflow: hidden;
+    background: var(--accent-red-text);
+  }
+  .swipe-del {
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 88px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .entry {
+    position: relative;
+    background: var(--card-bg);
+    border-radius: var(--radius-inner);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1), background 0.15s;
+    will-change: transform;
+    touch-action: pan-y;
+    border: 1px solid var(--border-light);
+  }
+  .entry:hover { background: var(--bg); }
+
+  .entry-date {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+  .entry-date .day { font-size: 1.1rem; font-weight: 700; line-height: 1; }
+  .entry-date .month { font-size: 0.6rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
+
+  .entry-weights { flex: 1; display: flex; align-items: center; gap: 8px; }
+  .w-before, .w-after { display: flex; flex-direction: column; gap: 2px; }
+  .w-before .lbl, .w-after .lbl { font-size: 0.6rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+  .w-before .val, .w-after .val { font-weight: 600; font-size: 1rem; }
+  .w-after .val { color: var(--text-main); }
+  .w-after .val.pending { color: var(--text-muted); font-weight: 400; font-style: italic; }
+
+  .arrow { color: #D1D5DB; font-size: 0.8rem; }
+
+  .entry-delta {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: var(--radius-pill);
+  }
+  .entry-delta.down { background: var(--accent-green-bg); color: var(--accent-green-text); }
+  .entry-delta.up { background: var(--accent-red-bg); color: var(--accent-red-text); }
+  .entry-delta.flat { background: var(--bg); color: var(--text-muted); }
+
+  .edit-btn {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .edit-btn:active { background: var(--border-light); color: var(--text-main); }
+
+  /* ---- Responsive Heatmap ---- */
+  .heatmap-container {
+    padding: 16px;
+    margin: 0 10px;
+    background: var(--bg);
+    border-radius: var(--radius-inner);
+  }
+  .heatmap-month { margin-bottom: 20px; }
+  .heatmap-month:last-child { margin-bottom: 0; }
+  .hm-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  
+  /* Using minmax(0, 1fr) guarantees the grid won't overflow the container */
+  .hm-grid { 
+    display: grid; 
+    grid-template-columns: repeat(7, minmax(0, 1fr)); 
+    gap: 4px; 
+    width: 100%;
+  }
+  
+  .hm-dow {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    text-align: center;
+    font-weight: 600;
+    padding-bottom: 4px;
+    white-space: nowrap;
+  }
+  
+  .hm-cell {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 4px;
+    background: var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    overflow: hidden;
+  }
+  .hm-cell.empty { background: transparent; }
+  .hm-cell.has-data { color: var(--text-main); border: 1px solid rgba(0,0,0,0.05); }
+  
+  .hm-cell.lvl-down-1 { background: #ECFDF5; color: #047857; }
+  .hm-cell.lvl-down-2 { background: #D1F8D9; color: #047857; }
+  .hm-cell.lvl-down-3 { background: #34D399; color: white; }
+  .hm-cell.lvl-up-1 { background: #FEF2F2; color: #B91C1C; }
+  .hm-cell.lvl-up-2 { background: #FEE2E2; color: #B91C1C; }
+  .hm-cell.lvl-up-3 { background: #F87171; color: white; }
+  .hm-cell.lvl-flat { background: white; border: 1px solid var(--border-light); }
+
+  .empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 40px 20px;
+    font-size: 0.9rem;
+    background: var(--bg);
+    border-radius: var(--radius-inner);
+    margin: 0 10px;
+  }
+  .empty strong { color: var(--text-main); display: block; margin-bottom: 4px; font-size: 0.95rem; font-weight: 600; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: var(--text-main);
+    color: white;
+    padding: 12px 20px;
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast button {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 17, 17, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-backdrop.show { display: flex; }
+
+  .modal {
+    background: var(--card-bg);
+    border-radius: 28px 28px 0 0;
+    padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+  }
+
+  .modal h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; }
+
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-actions button {
+    flex: 1;
+    border: none;
+    border-radius: var(--radius-inner);
+    padding: 14px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .modal-cancel { background: var(--bg); color: var(--text-main); }
+  .modal-save { background: var(--text-main); color: white; }
+
+  .import-help { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; }
+  .import-help code { background: var(--bg); color: var(--text-main); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-family: monospace; }
+  .import-drop {
+    border: 2px dashed var(--border-light);
+    border-radius: var(--radius-inner);
+    padding: 32px 16px;
+    text-align: center;
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 16px;
+  }
+  .import-drop:active, .import-drop.dragover { border-color: var(--text-main); background: var(--card-bg); }
+  .import-drop .ico { font-size: 1.5rem; margin-bottom: 8px; }
+  .import-drop .t1 { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+  .import-drop .t2 { font-size: 0.8rem; color: var(--text-muted); }
+  .import-preview { background: var(--bg); border-radius: var(--radius-inner); padding: 12px; font-size: 0.85rem; color: var(--text-muted); display: none; }
+  .import-preview.show { display: block; }
+  .import-preview .ok { color: var(--accent-green-text); font-weight: 600; }
+  .import-preview .bad { color: var(--accent-red-text); font-weight: 600; }
+
+  #importFile { display: none; }
+
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  @media (max-width: 380px) {
+    .stat-value { font-size: 1rem; }
+    .entry { padding: 12px; gap: 12px; }
+    .entry-delta { font-size: 0.7rem; padding: 4px 8px; }
+    .hm-title { font-size: 0.8rem; }
+    .hm-dow { font-size: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <header>
+    <h1>Weight Log</h1>
+    <div class="header-actions">
+      <span class="streak" id="streakLabel" style="display:none"></span>
+      <button class="icon-btn" id="importBtn" title="Import data" aria-label="Import data">↧</button>
+    </div>
+  </header>
+
+  <div class="session-banner" id="sessionBanner">
+    <div class="txt">
+      Session in progress · <strong id="sessionWeight">—</strong>
+      <span>Tap to add today's After weight</span>
+    </div>
+    <button id="sessionFinishBtn">Finish</button>
+  </div>
+
+  <div class="log-card">
+    <div class="weight-inputs">
+      <div class="input-wrap">
+        <label>Before</label>
+        <input type="number" id="beforeInput" inputmode="decimal" step="0.1" min="0" placeholder="—">
+        <span class="unit">kg</span>
+      </div>
+      <div class="input-wrap">
+        <label>After</label>
+        <input type="number" id="afterInput" inputmode="decimal" step="0.1" min="0" placeholder="—">
+        <span class="unit">kg</span>
+      </div>
+    </div>
+    <div class="date-row">
+      <input type="date" id="dateInput">
+    </div>
+    <button class="save-btn" id="saveBtn" disabled>Save Entry</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value" id="statStart">—</div>
+      <div class="stat-label">Start</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statCurrent">—</div>
+      <div class="stat-label">Current</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statChange">—</div>
+      <div class="stat-label">Change</div>
+    </div>
+  </div>
+
+  <div class="goal-card" id="goalCard">
+    <div class="goal-top">
+      <span class="lbl">Goal progress</span>
+      <span class="vals"><strong id="goalCur">—</strong> / <span id="goalTarget">—</span> kg</span>
+    </div>
+    <div class="goal-bar-track">
+      <div class="goal-bar-fill" id="goalBar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="stats-grid" id="weeklyStats" style="grid-template-columns:1fr 1fr; display:none">
+    <div class="stat-card">
+      <div class="stat-value" id="wkChange">—</div>
+      <div class="stat-label">Last 7 days</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="wkSessions">—</div>
+      <div class="stat-label">Sessions</div>
+    </div>
+  </div>
+
+  <div class="chart-card" id="chartCard">
+    <div class="chart-head">
+      <span class="lbl">Trend</span>
+      <span class="range" id="chartRange"></span>
+    </div>
+    <svg class="chart-svg" id="chartSvg" viewBox="0 0 300 64" preserveAspectRatio="none"></svg>
+  </div>
+
+  <div class="history-header">
+    <h2>History</h2>
+    <div class="segmented-control">
+      <button class="active" data-view="list">List</button>
+      <button data-view="heatmap">Heatmap</button>
+    </div>
+  </div>
+
+  <div class="history-list" id="history"></div>
+  <div class="heatmap-container" id="heatmap" style="display:none"></div>
+  
+  <div class="list-group" style="margin-top: 16px;">
+    <div class="list-item" id="promptGoalBtn" style="cursor:pointer;">
+      <div class="list-item-left">
+        <div class="list-icon">🎯</div>
+        <span>Set Goal</span>
+      </div>
+      <span class="circle-plus">+</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Edit modal -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h3>Edit entry</h3>
+    <div class="weight-inputs">
+      <div class="input-wrap">
+        <label>Before</label>
+        <input type="number" id="editBefore" inputmode="decimal" step="0.1" min="0" placeholder="—">
+        <span class="unit">kg</span>
+      </div>
+      <div class="input-wrap">
+        <label>After</label>
+        <input type="number" id="editAfter" inputmode="decimal" step="0.1" min="0" placeholder="—">
+        <span class="unit">kg</span>
+      </div>
+    </div>
+    <div class="date-row">
+      <input type="date" id="editDate">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="editCancel">Cancel</button>
+      <button class="modal-save" id="editSave">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import modal -->
+<div class="modal-backdrop" id="importBackdrop">
+  <div class="modal">
+    <h3>Import data</h3>
+    <div class="import-help">
+      Supported: <strong>CSV</strong> or <strong>JSON</strong>.<br>
+      CSV columns: <code>date,before,after</code><br>
+      Date format: <code>YYYY-MM-DD</code>
+    </div>
+    <div class="import-drop" id="importDrop">
+      <div class="ico">↧</div>
+      <div class="t1">Choose file or drop here</div>
+      <div class="t2">.csv or .json</div>
+      <input type="file" id="importFile" accept=".csv,.json,text/csv,application/json">
+    </div>
+    <div class="import-preview" id="importPreview"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="importCancel">Cancel</button>
+      <button class="modal-save" id="importConfirm" disabled>Import</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const KEY = 'weight_log_v2';
+  const GOAL_KEY = 'weight_log_goal';
+
+  let entries = [];
+  let goal = null;
+  let currentView = 'list';
+  let editingId = null;
+  let toastTimer = null;
+  let lastDeleted = null;
+  let pendingImport = null;
+
+  const $ = id => document.getElementById(id);
+  const beforeInput = $('beforeInput');
+  const afterInput  = $('afterInput');
+  const dateInput   = $('dateInput');
+  const saveBtn     = $('saveBtn');
+  const historyEl   = $('history');
+  const heatmapEl   = $('heatmap');
+  const toastEl     = $('toast');
+  const statStart   = $('statStart');
+  const statCurrent = $('statCurrent');
+  const statChange  = $('statChange');
+  const sessionBanner = $('sessionBanner');
+  const sessionWeight = $('sessionWeight');
+  const streakLabel = $('streakLabel');
+  const goalCard    = $('goalCard');
+  const goalCur     = $('goalCur');
+  const goalTarget  = $('goalTarget');
+  const goalBar     = $('goalBar');
+  const weeklyStats = $('weeklyStats');
+  const wkChange    = $('wkChange');
+  const wkSessions  = $('wkSessions');
+  const chartCard   = $('chartCard');
+  const chartSvg    = $('chartSvg');
+  const chartRange  = $('chartRange');
+  const modalBackdrop = $('modalBackdrop');
+  const editBefore  = $('editBefore');
+  const editAfter   = $('editAfter');
+  const editDate    = $('editDate');
+  const importBackdrop = $('importBackdrop');
+  const importDrop = $('importDrop');
+  const importFile = $('importFile');
+  const importPreview = $('importPreview');
+  const importConfirm = $('importConfirm');
+
+  const todayISO = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  };
+  const fmt = w => (w == null || w === '') ? '—' : Number(w).toFixed(1);
+  const round1 = n => Math.round(n * 10) / 10;
+
+  function showToast(msg, undoFn) {
+    toastEl.innerHTML = '';
+    const span = document.createElement('span');
+    span.textContent = msg;
+    toastEl.appendChild(span);
+    if (undoFn) {
+      const b = document.createElement('button');
+      b.textContent = 'Undo';
+      b.onclick = () => { undoFn(); toastEl.classList.remove('show'); };
+      toastEl.appendChild(b);
+    }
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), undoFn ? 5000 : 1800);
+  }
+
+  const weightOf = e => e.after ?? e.before ?? null;
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      entries = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(entries)) entries = [];
+      const g = localStorage.getItem(GOAL_KEY);
+      goal = g ? parseFloat(g) : null;
+      if (goal !== null && (!isFinite(goal) || goal <= 0)) goal = null;
+    } catch { entries = []; goal = null; }
+  }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(entries)); }
+    catch { showToast('Storage full'); }
+  }
+  function persistGoal() {
+    try {
+      if (goal) localStorage.setItem(GOAL_KEY, String(goal));
+      else localStorage.removeItem(GOAL_KEY);
+    } catch {}
+  }
+
+  function validate() {
+    const b = beforeInput.value.trim();
+    const a = afterInput.value.trim();
+    const d = dateInput.value;
+    const okB = b !== '' && !isNaN(+b) && +b > 0;
+    const okA = a !== '' && !isNaN(+a) && +a > 0;
+    saveBtn.disabled = !(d && (okB || okA));
+  }
+
+  function addEntry() {
+    const date = dateInput.value;
+    const bRaw = beforeInput.value.trim();
+    const aRaw = afterInput.value.trim();
+    
+    if (!date) return showToast('Pick a date');
+    
+    // Check for duplicate date
+    if (entries.some(e => e.date === date)) {
+      return showToast('An entry for this date already exists!');
+    }
+
+    const before = bRaw === '' ? null : +bRaw;
+    const after  = aRaw  === '' ? null : +aRaw;
+    if (before !== null && (!isFinite(before) || before <= 0)) return showToast('Invalid before');
+    if (after  !== null && (!isFinite(after)  || after  <= 0)) return showToast('Invalid after');
+    if (before === null && after === null) return showToast('Enter at least one weight');
+    
+    entries.push({
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      date,
+      before: before === null ? null : round1(before),
+      after:  after  === null ? null : round1(after),
+    });
+    persist();
+    beforeInput.value = '';
+    afterInput.value = '';
+    dateInput.value = todayISO();
+    saveBtn.disabled = true;
+    showToast('Saved ✓');
+    render();
+    beforeInput.focus();
+  }
+
+  function openEdit(id) {
+    const e = entries.find(x => x.id === id);
+    if (!e) return;
+    editingId = id;
+    editBefore.value = e.before ?? '';
+    editAfter.value  = e.after  ?? '';
+    editDate.value   = e.date;
+    modalBackdrop.classList.add('show');
+  }
+  function closeEdit() {
+    modalBackdrop.classList.remove('show');
+    editingId = null;
+  }
+  function saveEdit() {
+    const e = entries.find(x => x.id === editingId);
+    if (!e) return closeEdit();
+    const b = editBefore.value.trim();
+    const a = editAfter.value.trim();
+    const d = editDate.value;
+    
+    if (!d) return showToast('Pick a date');
+    
+    // Check for duplicate date (excluding this entry itself)
+    if (entries.some(x => x.date === d && x.id !== editingId)) {
+      return showToast('Another entry already exists for this date!');
+    }
+
+    const before = b === '' ? null : +b;
+    const after  = a === '' ? null : +a;
+    if (before === null && after === null) return showToast('Enter at least one weight');
+    if (before !== null && (!isFinite(before) || before <= 0)) return showToast('Invalid before');
+    if (after  !== null && (!isFinite(after)  || after  <= 0)) return showToast('Invalid after');
+    
+    e.date = d;
+    e.before = before === null ? null : round1(before);
+    e.after  = after  === null ? null : round1(after);
+    persist();
+    closeEdit();
+    showToast('Updated ✓');
+    render();
+  }
+
+  function deleteEntry(id) {
+    const idx = entries.findIndex(e => e.id === id);
+    if (idx === -1) return;
+    lastDeleted = { entry: entries[idx], idx };
+    entries.splice(idx, 1);
+    persist();
+    render();
+    showToast('Deleted', () => {
+      if (lastDeleted) {
+        entries.splice(lastDeleted.idx, 0, lastDeleted.entry);
+        persist();
+        render();
+        lastDeleted = null;
+      }
+    });
+  }
+
+  function updateSessionBanner() {
+    const today = todayISO();
+    const pending = entries.find(e => e.date === today && e.before != null && e.after == null);
+    if (pending) {
+      sessionBanner.classList.add('show');
+      sessionWeight.textContent = pending.before.toFixed(1) + ' kg';
+    } else {
+      sessionBanner.classList.remove('show');
+    }
+  }
+
+  function finishSession() {
+    const today = todayISO();
+    const pending = entries.find(e => e.date === today && e.before != null && e.after == null);
+    if (!pending) return;
+    beforeInput.value = pending.before;
+    afterInput.value = '';
+    dateInput.value = today;
+    validate();
+    afterInput.focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast('Enter After weight');
+  }
+
+  function computeStreak() {
+    const dates = new Set(entries.map(e => e.date));
+    if (dates.size === 0) return 0;
+    let streak = 0;
+    const d = new Date();
+    if (!dates.has(todayISO())) d.setDate(d.getDate() - 1);
+    while (true) {
+      const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      if (!dates.has(iso)) break;
+      streak++;
+      d.setDate(d.getDate() - 1);
+    }
+    return streak;
+  }
+
+  function renderStats(sorted) {
+    if (sorted.length === 0) {
+      statStart.textContent = '—'; statStart.className = 'stat-value';
+      statCurrent.textContent = '—'; statCurrent.className = 'stat-value';
+      statChange.textContent = '—'; statChange.className = 'stat-value';
+      return;
+    }
+    const first = sorted[sorted.length - 1];
+    const last  = sorted[0];
+    const startW = weightOf(first);
+    const currW  = weightOf(last);
+    statStart.textContent   = startW != null ? startW.toFixed(1) : '—';
+    statCurrent.textContent = currW  != null ? currW.toFixed(1)  : '—';
+    if (startW != null && currW != null) {
+      const diff = round1(currW - startW);
+      if (Math.abs(diff) < 0.05) {
+        statChange.textContent = '0.0';
+        statChange.className = 'stat-value';
+      } else if (diff < 0) {
+        statChange.textContent = '↓ ' + Math.abs(diff).toFixed(1);
+        statChange.className = 'stat-value down';
+      } else {
+        statChange.textContent = '↑ ' + diff.toFixed(1);
+        statChange.className = 'stat-value up';
+      }
+    } else {
+      statChange.textContent = '—';
+      statChange.className = 'stat-value';
+    }
+  }
+
+  function renderGoal(sorted) {
+    if (!goal) { goalCard.classList.remove('show'); return; }
+    goalCard.classList.add('show');
+    goalTarget.textContent = goal.toFixed(1);
+    if (sorted.length === 0) {
+      goalCur.textContent = '—';
+      goalBar.style.width = '0%';
+      return;
+    }
+    const startW = weightOf(sorted[sorted.length - 1]);
+    const currW  = weightOf(sorted[0]);
+    if (currW == null || startW == null || startW === goal) {
+      goalCur.textContent = currW != null ? currW.toFixed(1) : '—';
+      goalBar.style.width = '0%';
+      return;
+    }
+    goalCur.textContent = currW.toFixed(1);
+    const total = startW - goal;
+    const done  = startW - currW;
+    let pct = total === 0 ? 0 : Math.max(0, Math.min(1, done / total)) * 100;
+    if (done < 0) pct = 0;
+    goalBar.style.width = pct + '%';
+  }
+
+  function renderWeekly() {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 7);
+    const cutoffISO = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+    const recent = entries.filter(e => e.date >= cutoffISO);
+    if (recent.length < 2) {
+      weeklyStats.style.display = 'none';
+      return;
+    }
+    weeklyStats.style.display = 'grid';
+    const withW = recent.filter(e => weightOf(e) != null)
+                        .sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+    if (withW.length >= 2) {
+      const diff = round1(weightOf(withW[withW.length-1]) - weightOf(withW[0]));
+      if (Math.abs(diff) < 0.05) {
+        wkChange.textContent = '0.0';
+        wkChange.className = 'stat-value';
+      } else if (diff < 0) {
+        wkChange.textContent = '↓ ' + Math.abs(diff).toFixed(1);
+        wkChange.className = 'stat-value down';
+      } else {
+        wkChange.textContent = '↑ ' + diff.toFixed(1);
+        wkChange.className = 'stat-value up';
+      }
+    } else {
+      wkChange.textContent = '—';
+      wkChange.className = 'stat-value';
+    }
+    wkSessions.textContent = recent.length;
+    wkSessions.className = 'stat-value';
+  }
+
+  function renderChart(sorted) {
+    const byDate = {};
+    entries.forEach(e => {
+      const w = e.after ?? e.before;
+      if (w != null) {
+        if (byDate[e.date] == null) byDate[e.date] = w;
+        else if (e.after != null) byDate[e.date] = e.after;
+      }
+    });
+    const days = [];
+    const today = new Date();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      days.push({ iso, w: byDate[iso] ?? null });
+    }
+    const valid = days.filter(d => d.w != null);
+    if (valid.length < 2) { chartCard.classList.remove('show'); return; }
+    chartCard.classList.add('show');
+
+    const ws = valid.map(d => d.w);
+    const minW = Math.min(...ws) - 0.3;
+    const maxW = Math.max(...ws) + 0.3;
+    const range = maxW - minW || 1;
+    const W = 300, H = 64, padX = 4, padY = 8;
+    const x = i => padX + (i / 13) * (W - padX * 2);
+    const y = w => H - padY - ((w - minW) / range) * (H - padY * 2);
+
+    let path = '', started = false, firstX = 0, firstY = 0, lastX = 0, lastY = 0;
+    days.forEach((d, i) => {
+      if (d.w == null) { started = false; return; }
+      const px = x(i), py = y(d.w);
+      if (!started) { path += `M${px},${py} `; started = true; firstX = px; firstY = py; }
+      else path += `L${px},${py} `;
+      lastX = px; lastY = py;
+    });
+
+    let dots = '';
+    days.forEach((d, i) => {
+      if (d.w == null) return;
+      const px = x(i), py = y(d.w);
+      const isLast = i === days.length - 1 || days.slice(i+1).every(dd => dd.w == null);
+      dots += isLast
+        ? `<circle cx="${px}" cy="${py}" r="3.5" fill="#FFF" stroke="#111" stroke-width="2"/>`
+        : `<circle cx="${px}" cy="${py}" r="2" fill="#111"/>`;
+    });
+
+    chartSvg.innerHTML = `
+      <path d="${path}" fill="none" stroke="#111" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      ${dots}
+    `;
+    chartRange.textContent = `${minW.toFixed(1)} – ${maxW.toFixed(1)} kg`;
+  }
+
+  function renderList(sorted) {
+    if (sorted.length === 0) {
+      historyEl.innerHTML = `<div class="empty"><strong>No sessions yet</strong>Add your first weigh-in above.</div>`;
+      return;
+    }
+    historyEl.innerHTML = sorted.map(e => {
+      const [y, m, d] = e.date.split('-');
+      const dateObj = new Date(y, m - 1, d);
+      const dayNum = dateObj.getDate();
+      const month = dateObj.toLocaleDateString('en-US', { month: 'short' });
+      let deltaHtml = '';
+      if (e.before != null && e.after != null) {
+        const diff = round1(e.after - e.before);
+        if (Math.abs(diff) < 0.05) deltaHtml = `<div class="entry-delta flat">0.0</div>`;
+        else if (diff < 0) deltaHtml = `<div class="entry-delta down">−${Math.abs(diff).toFixed(1)}</div>`;
+        else deltaHtml = `<div class="entry-delta up">+${diff.toFixed(1)}</div>`;
+      } else {
+        deltaHtml = `<div class="entry-delta flat">—</div>`;
+      }
+      const beforeVal = e.before != null ? fmt(e.before) : '—';
+      const afterVal  = e.after  != null ? fmt(e.after)  : '—';
+      const afterClass = e.after == null ? 'pending' : '';
+      return `
+        <div class="swipe-wrap" data-id="${e.id}">
+          <div class="swipe-del">Delete</div>
+          <div class="entry" data-id="${e.id}">
+            <div class="entry-date">
+              <div class="day">${dayNum}</div>
+              <div class="month">${month}</div>
+            </div>
+            <div class="entry-weights">
+              <div class="w-before">
+                <div class="lbl">Before</div>
+                <div class="val">${beforeVal}</div>
+              </div>
+              <div class="arrow">→</div>
+              <div class="w-after">
+                <div class="lbl">After</div>
+                <div class="val ${afterClass}">${afterVal}</div>
+              </div>
+            </div>
+            ${deltaHtml}
+            <button class="edit-btn" data-id="${e.id}" aria-label="Edit">✎</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    historyEl.querySelectorAll('.entry').forEach(el => {
+      const id = +el.dataset.id;
+      el.querySelector('.edit-btn').addEventListener('click', ev => {
+        ev.stopPropagation();
+        openEdit(id);
+      });
+      attachSwipe(el, id);
+    });
+  }
+
+  function attachSwipe(el, id) {
+    let startX = 0, startY = 0, currentX = 0, dragging = false, locked = false;
+    const onStart = ev => {
+      const t = ev.touches ? ev.touches[0] : ev;
+      startX = t.clientX; startY = t.clientY; currentX = 0;
+      dragging = true; locked = false;
+      el.style.transition = 'none';
+    };
+    const onMove = ev => {
+      if (!dragging) return;
+      const t = ev.touches ? ev.touches[0] : ev;
+      const dx = t.clientX - startX, dy = t.clientY - startY;
+      if (!locked) {
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 6) locked = true;
+        else if (Math.abs(dy) > 6) { dragging = false; el.style.transition = ''; el.style.transform = ''; return; }
+      }
+      if (!locked) return;
+      currentX = Math.max(-100, Math.min(0, dx));
+      el.style.transform = `translateX(${currentX}px)`;
+      if (ev.cancelable) ev.preventDefault();
+    };
+    const onEnd = () => {
+      if (!dragging) return;
+      dragging = false;
+      el.style.transition = '';
+      if (currentX < -60) {
+        el.style.transform = 'translateX(-100px)';
+        setTimeout(() => { el.style.transform = ''; deleteEntry(id); }, 150);
+      } else {
+        el.style.transform = '';
+      }
+      currentX = 0;
+    };
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd);
+    el.addEventListener('touchcancel', onEnd);
+    el.addEventListener('mousedown', e => { if (e.button !== 0) return; onStart(e); });
+    window.addEventListener('mousemove', e => { if (dragging) onMove(e); });
+    window.addEventListener('mouseup', () => { if (dragging) onEnd(); });
+  }
+
+  function renderHeatmap(sorted) {
+    if (sorted.length === 0) {
+      heatmapEl.innerHTML = `<div class="empty"><strong>Nothing to show</strong>Log a session to see your calendar.</div>`;
+      return;
+    }
+    const byDate = {};
+    entries.forEach(e => {
+      const w = e.after ?? e.before;
+      if (w != null) {
+        if (!byDate[e.date]) byDate[e.date] = w;
+        else if (e.after != null) byDate[e.date] = e.after;
+      }
+    });
+    const dates = Object.keys(byDate).sort();
+    const deltaByDate = {};
+    let prevW = null;
+    dates.forEach(d => {
+      const w = byDate[d];
+      deltaByDate[d] = prevW == null ? 0 : round1(w - prevW);
+      prevW = w;
+    });
+    const months = {};
+    dates.forEach(d => {
+      const [y, m] = d.split('-');
+      const key = `${y}-${m}`;
+      if (!months[key]) months[key] = { year: +y, month: +m - 1, days: {} };
+      months[key].days[d] = true;
+    });
+    const monthKeys = Object.keys(months).sort();
+    const dowLabels = ['S','M','T','W','T','F','S'];
+    let html = '';
+    monthKeys.forEach(key => {
+      const { year, month } = months[key];
+      const monthName = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      html += `<div class="heatmap-month"><div class="hm-title">${monthName}</div><div class="hm-grid">`;
+      dowLabels.forEach(l => html += `<div class="hm-dow">${l}</div>`);
+      for (let i = 0; i < firstDay; i++) html += `<div class="hm-cell empty"></div>`;
+      for (let day = 1; day <= daysInMonth; day++) {
+        const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        if (byDate[iso]) {
+          const delta = deltaByDate[iso];
+          let cls = 'lvl-flat';
+          if (delta < -0.7) cls = 'lvl-down-3';
+          else if (delta < -0.2) cls = 'lvl-down-2';
+          else if (delta < -0.05) cls = 'lvl-down-1';
+          else if (delta > 0.7) cls = 'lvl-up-3';
+          else if (delta > 0.2) cls = 'lvl-up-2';
+          else if (delta > 0.05) cls = 'lvl-up-1';
+          html += `<div class="hm-cell has-data ${cls}" title="${iso}: ${byDate[iso].toFixed(1)} kg">${day}</div>`;
+        } else {
+          html += `<div class="hm-cell">${day}</div>`;
+        }
+      }
+      html += `</div></div>`;
+    });
+    heatmapEl.innerHTML = html;
+  }
+
+  function render() {
+    const sorted = [...entries].sort((a, b) => {
+      if (a.date !== b.date) return b.date.localeCompare(a.date);
+      return b.id - a.id;
+    });
+    renderStats(sorted);
+    renderGoal(sorted);
+    renderWeekly();
+    renderChart(sorted);
+    updateSessionBanner();
+    const streak = computeStreak();
+    if (streak >= 2) {
+      streakLabel.style.display = 'inline-block';
+      streakLabel.textContent = `🔥 ${streak}d`;
+    } else {
+      streakLabel.style.display = 'none';
+    }
+    if (currentView === 'list') {
+      historyEl.style.display = 'flex';
+      heatmapEl.style.display = 'none';
+      renderList(sorted);
+    } else {
+      historyEl.style.display = 'none';
+      heatmapEl.style.display = 'block';
+      renderHeatmap(sorted);
+    }
+  }
+
+  function promptGoal() {
+    const v = prompt('Goal weight (kg) — leave empty to clear:', goal ? goal.toFixed(1) : '');
+    if (v === null) return;
+    if (v.trim() === '') { goal = null; persistGoal(); render(); return; }
+    const n = parseFloat(v);
+    if (!isFinite(n) || n <= 0) return showToast('Invalid goal');
+    goal = round1(n);
+    persistGoal();
+    render();
+    showToast('Goal set');
+  }
+
+  function openImport() {
+    pendingImport = null;
+    importFile.value = '';
+    importPreview.classList.remove('show');
+    importPreview.innerHTML = '';
+    importConfirm.disabled = true;
+    importBackdrop.classList.add('show');
+  }
+  function closeImport() {
+    importBackdrop.classList.remove('show');
+    pendingImport = null;
+    importDrop.classList.remove('dragover');
+  }
+
+  function parseCSV(text) {
+    const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+    if (lines.length === 0) return { rows: [], errors: ['File is empty'] };
+    const errors = [];
+    const rows = [];
+    const first = lines[0].toLowerCase().replace(/\s+/g, '');
+    let start = 0;
+    if (first.includes('date') && (first.includes('before') || first.includes('after'))) start = 1;
+    for (let i = start; i < lines.length; i++) {
+      const cells = lines[i].split(',').map(c => c.trim());
+      if (cells.length < 2) { errors.push(`Row ${i+1}: needs at least date,weight`); continue; }
+      const date = cells[0];
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { errors.push(`Row ${i+1}: bad date "${date}"`); continue; }
+      let before = null, after = null;
+      if (cells.length >= 3) {
+        before = cells[1] === '' ? null : parseFloat(cells[1]);
+        after  = cells[2] === '' ? null : parseFloat(cells[2]);
+        if (before !== null && (!isFinite(before) || before <= 0)) { errors.push(`Row ${i+1}: bad before`); continue; }
+        if (after !== null && (!isFinite(after) || after <= 0)) { errors.push(`Row ${i+1}: bad after`); continue; }
+      } else {
+        const w = parseFloat(cells[1]);
+        if (!isFinite(w) || w <= 0) { errors.push(`Row ${i+1}: bad weight`); continue; }
+        before = w;
+      }
+      if (before === null && after === null) { errors.push(`Row ${i+1}: no weight`); continue; }
+      rows.push({
+        date,
+        before: before === null ? null : round1(before),
+        after:  after  === null ? null : round1(after),
+      });
+    }
+    return { rows, errors };
+  }
+
+  function parseJSON(text) {
+    try {
+      const data = JSON.parse(text);
+      if (!Array.isArray(data)) return { rows: [], errors: ['JSON must be an array of entries'] };
+      const errors = [];
+      const rows = [];
+      data.forEach((item, i) => {
+        if (!item || typeof item !== 'object') { errors.push(`Item ${i+1}: not an object`); return; }
+        const date = item.date;
+        if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { errors.push(`Item ${i+1}: bad date`); return; }
+        let before = item.before == null || item.before === '' ? null : parseFloat(item.before);
+        let after  = item.after  == null || item.after  === '' ? null : parseFloat(item.after);
+        if (before !== null && (!isFinite(before) || before <= 0)) { errors.push(`Item ${i+1}: bad before`); return; }
+        if (after !== null && (!isFinite(after) || after <= 0)) { errors.push(`Item ${i+1}: bad after`); return; }
+        if (before === null && after === null) { errors.push(`Item ${i+1}: no weight`); return; }
+        rows.push({
+          date,
+          before: before === null ? null : round1(before),
+          after:  after  === null ? null : round1(after),
+        });
+      });
+      return { rows, errors };
+    } catch (e) {
+      return { rows: [], errors: ['Invalid JSON: ' + e.message] };
+    }
+  }
+
+  function handleFile(file) {
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result);
+      let result;
+      if (name.endsWith('.json') || text.trim().startsWith('[')) result = parseJSON(text);
+      else result = parseCSV(text);
+      
+      // Filter out rows that already exist in the current entries to prevent duplicates during import
+      const existingDates = new Set(entries.map(e => e.date));
+      const validRows = result.rows.filter(r => !existingDates.has(r.date));
+      const skippedDuplicates = result.rows.length - validRows.length;
+      
+      pendingImport = validRows;
+      const total = validRows.length;
+      const errs = result.errors;
+      
+      importPreview.classList.add('show');
+      if (total === 0) {
+        importPreview.innerHTML = `<span class="bad">No new entries to import (already added or invalid).</span>`;
+        importConfirm.disabled = true;
+      } else {
+        const dates = new Set(validRows.map(r => r.date));
+        let msg = `<span class="ok">✓ ${total} valid ${total===1?'entry':'entries'}</span>`;
+        if (skippedDuplicates > 0) msg += ` · ${skippedDuplicates} skipped (duplicate dates)`;
+        if (errs.length > 0) msg += `<br><span class="bad">${errs.length} invalid rows</span>`;
+        importPreview.innerHTML = msg;
+        importConfirm.disabled = false;
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function confirmImport() {
+    if (!pendingImport || pendingImport.length === 0) return;
+    const sorted = [...pendingImport].sort((a, b) => a.date.localeCompare(b.date));
+    let added = 0;
+    sorted.forEach((row, i) => {
+      entries.push({
+        id: Date.now() + i + Math.floor(Math.random() * 1000),
+        date: row.date,
+        before: row.before,
+        after: row.after,
+      });
+      added++;
+    });
+    persist();
+    closeImport();
+    render();
+    showToast(`Imported ${added} ${added===1?'entry':'entries'}`);
+  }
+
+  function init() {
+    load();
+    dateInput.value = todayISO();
+    updateSessionBanner();
+
+    saveBtn.addEventListener('click', addEntry);
+    $('sessionFinishBtn').addEventListener('click', finishSession);
+    $('promptGoalBtn').addEventListener('click', promptGoal);
+    
+    [beforeInput, afterInput, dateInput].forEach(el => {
+      el.addEventListener('input', validate);
+      el.addEventListener('change', validate);
+    });
+    [beforeInput, afterInput].forEach(el => {
+      el.addEventListener('keydown', ev => {
+        if (ev.key === 'Enter' && !saveBtn.disabled) { ev.preventDefault(); addEntry(); }
+      });
+    });
+
+    document.querySelectorAll('.segmented-control button').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.segmented-control button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        currentView = b.dataset.view;
+        render();
+      });
+    });
+
+    $('editCancel').addEventListener('click', closeEdit);
+    $('editSave').addEventListener('click', saveEdit);
+    modalBackdrop.addEventListener('click', e => { if (e.target === modalBackdrop) closeEdit(); });
+
+    $('importBtn').addEventListener('click', openImport);
+    $('importCancel').addEventListener('click', closeImport);
+    importBackdrop.addEventListener('click', e => { if (e.target === importBackdrop) closeImport(); });
+    importDrop.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', e => handleFile(e.target.files[0]));
+    importDrop.addEventListener('dragover', e => { e.preventDefault(); importDrop.classList.add('dragover'); });
+    importDrop.addEventListener('dragleave', () => importDrop.classList.remove('dragover'));
+    importDrop.addEventListener('drop', e => {
+      e.preventDefault();
+      importDrop.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+    importConfirm.addEventListener('click', confirmImport);
+
+    validate();
+    render();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
